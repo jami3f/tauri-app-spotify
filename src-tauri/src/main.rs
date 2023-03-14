@@ -9,11 +9,16 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-async fn get_request() -> String {
-    let client = reqwest::Client::new();
-    let res = client.get("https://www.rust-lang.org").send().await.expect("Failed to send request");
-    let body = res.text().await.expect("Failed to read body");
-    body
+fn get_currently_playing() -> str {
+    ""
+}
+
+#[tauri::command]
+fn get_request() -> serde_json::Value {
+    // let client = reqwest::Client::blocking::new();
+    let res = reqwest::blocking::get("https://dummyjson.com/products");
+    let json = res.unwrap().json::<serde_json::Value>().unwrap();
+    json
 }
 
 fn main() {
