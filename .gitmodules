@@ -1,0 +1,3 @@
+[submodule "plugins/tauri-plugin-oauth"]
+	path = plugins/tauri-plugin-oauth
+	url = https://github.com/FabianLars/tauri-plugin-oauth.git

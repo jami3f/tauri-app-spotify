@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use reqwest;
 
+
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -9,8 +10,17 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn get_currently_playing() -> str {
-    ""
+fn authenticate() {
+
+}
+
+#[tauri::command]
+fn get_currently_playing() -> String {
+    String::from("")
+}
+
+fn get_native_request() {
+
 }
 
 #[tauri::command]
