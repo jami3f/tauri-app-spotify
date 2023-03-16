@@ -13,10 +13,37 @@
   "tauri": {
     "allowlist": {
       "all": false,
-      "http": {
-        "all": true,
-        "request": true,
-        "scope": ["https://dummyjson.com/products"]
+      "window":{
+        "all": false,
+        "center": false,
+        "close": false,
+        "create": false,
+        "hide": false,
+        "maximize": false,
+        "minimize": true,
+        "print": false,
+        "requestUserAttention": false,
+        "setAlwaysOnTop": true,
+        "setCursorGrab": false,
+        "setCursorIcon": false,
+        "setCursorPosition": false,
+        "setCursorVisible": false,
+        "setDecorations": false,
+        "setFocus": false,
+        "setFullscreen": false,
+        "setIcon": false,
+        "setIgnoreCursorEvents": false,
+        "setMaxSize": false,
+        "setMinSize": false,
+        "setPosition": false,
+        "setResizable": false,
+        "setSize": false,
+        "setSkipTaskbar": false,
+        "setTitle": false,
+        "show": false,
+        "startDragging": false,
+        "unmaximize": false,
+        "unminimize": false
       },
       "shell": {
         "all": false,
@@ -44,10 +71,14 @@
     "windows": [
       {
         "fullscreen": false,
-        "resizable": true,
+        "resizable": false,
         "title": "desktop-app",
-        "width": 800,
-        "height": 600
+        "width": 600,
+        "height": 400,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "x": 2555,
+        "y": 1000
       }
     ]
   }

@@ -1,57 +1,92 @@
 import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { tauri } from "@tauri-apps/api";
+import { listen } from "@tauri-apps/api/event";
+import { appWindow } from "@tauri-apps/api/window";
 const { invoke } = tauri;
 import "./styles.css";
 
-export interface productTypes {
-  brand: string;
-  category: string;
-  description: string;
-  discountPercentage: number;
-  id: number;
-  images: string[];
-  price: number;
-  rating: number;
-  stock: number;
-  thumbnail: string;
-  title: string;
+interface buttonProps {
+  content: string;
+  onClick: () => void;
+  shape: "circle" | "square" | "none";
+}
+
+function Button(props: any) {
+  return (
+    <button
+      onClick={props.onClick}
+      className={`w-20 h-20 ${
+        props.shape == "circle"
+          ? "rounded-full"
+          : props.shape == "square"
+          ? "rounded-none"
+          : "rounded-md"
+      } bg-blue-500`}
+    >
+      {" "}
+      {props.content}{" "}
+    </button>
+  );
+}
+
+async function generateParams(window: Window) {
+  const randomText: string = await invoke("generate_random_text");
+  const clientId: string = await invoke("get_client_id");
+  localStorage.setItem("code_verifier", randomText);
+  const encoder = new TextEncoder();
+  const code = await window.crypto.subtle.digest(
+    "SHA-256",
+    encoder.encode(randomText)
+  );
+  const codeChallenge = window
+    .btoa(String.fromCharCode(...new Uint8Array(code)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  console.log(codeChallenge);
+  const port: number | string = await invoke("start_server");
+  const scope = "streaming user-read-private user-read-email";
+  let params = new URLSearchParams({
+    response_type: "code",
+    client_id: clientId,
+    redirect_uri: `http://localhost:${port}`,
+    scope: scope,
+  });
+  return params;
 }
 
 function App() {
-  const [elems, setElems] = useState<any[]>([]);
-  const print = async () => {
-    const result_string: [productTypes] = (
-      await invoke<{ products: [productTypes] }>("get_request")
-    ).products;
-    console.log(Object.entries(result_string[0]))
-    const result = result_string.map((item) =>
-      Object.entries(item).map(([key, value]) => 
-        key == "images" ? (
-          <div className="flex">
-            {value.map((src: string) => (
-              <img alt="image" src={src} className="w-36 object-scale-down"/>
-            ))}
-          </div>
-        ) : (
-          <p>
-            {key}:{value}
-          </p>
-        )
-      )
-    );
-    // console.log(result)
-    setElems(result);
-  };
-
+  let authWindow: Window | null;
+  const [text, setText] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
   useEffect(() => {
-    print();
+    (async () => await invoke("setup"))();
+    console.log("setup");
+    listen("redirect_uri", (event: any) => {
+      console.log(authWindow);
+      if (event.payload == "success") setLoggedIn(true);
+      authWindow?.close();
+    });
   }, []);
 
+  async function handleClick() {
+    const params = await generateParams(window);
+    authWindow = open(
+      `https://accounts.spotify.com/authorize?${params.toString()}`,
+      "_blank",
+      "width=600,height=800"
+    );
+  }
+
   return (
-    <div className="border border-black w-96 h-64">
-      <h1>Welcome to Tauri!</h1>
-      {elems}
+    <div className="w-screen h-screen flex border border-black justify-center items-center">
+      {loggedIn ? (
+        <div>Logged in</div>
+      ) : (
+        <Button onClick={handleClick} content="Authorize" shape="none" />
+      )}
+      {text}
     </div>
   );
 }
