@@ -28,31 +28,14 @@ async fn start_server(window: Window) -> Result<u16, String> {
             println!("Code: {}", code);
             let token = get_token(code);
             println!("Token: {}", token);
-            let _ = window.emit("redirect_uri", "success");
+            let _ = window.emit("redirect_uri", token);
         },
     )
     .map_err(|err| err.to_string());
     server
 }
 
-#[tauri::command]
-fn generate_random_text() -> String {
-    let mut random_text = String::new();
-    let possible_text =
-        String::from("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-    let mut rng = rand::thread_rng();
-    for _ in 0..128 {
-        random_text.push(
-            possible_text
-                .chars()
-                .nth(rng.gen_range(0..possible_text.len()))
-                .unwrap(),
-        );
-    }
-    random_text
-}
-
-fn get_token(code: &str) -> &str {
+fn get_token(code: &str) -> String {
     dotenv().ok();
     let client_id = std::env::var("CLIENT_ID").expect("Error: CLIENT_ID must be set");
     let client_secret = std::env::var("CLIENT_SECRET").expect("Error: CLIENT_SECRET must be set");
@@ -80,8 +63,41 @@ fn get_token(code: &str) -> &str {
         .unwrap()
         .get("access_token")
         .unwrap()
-        .to_string()
-        .as_str();
+        .as_str()
+        .unwrap()
+        .to_string();
+    token
+}
+
+#[tauri::command]
+fn get_new_token(refresh_token: &str) -> String {
+    dotenv().ok();
+    let client_id = std::env::var("CLIENT_ID").expect("Error: CLIENT_ID must be set");
+    let client_secret = std::env::var("CLIENT_SECRET").expect("Error: CLIENT_SECRET must be set");
+    let client = Client::new();
+    let params = [
+        ("grant_type", "refresh_token"),
+        ("refresh_token", refresh_token),
+    ];
+    let response = client
+        .post("https://accounts.spotify.com/api/token")
+        .form(&params)
+        .header(
+            "Authorization",
+            format!(
+                "Basic {}",
+                general_purpose::STANDARD.encode(format!("{}:{}", client_id, client_secret))
+            ),
+        )
+        .send()
+        .unwrap()
+        .text()
+        .unwrap();
+    let token = serde_json::from_str::<serde_json::Value>(&response)
+        .unwrap()
+        .get("access_token")
+        .unwrap()
+        .to_string();
     token
 }
 
@@ -114,19 +130,9 @@ fn get_client_id() -> String {
     std::env::var("CLIENT_ID").expect("Error: CLIENT_ID must be set")
 }
 
-// // #[tauri::command]
-// fn get_currently_playing() -> String {
-
-// }
-
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            start_server,
-            generate_random_text,
-            setup,
-            get_client_id
-        ])
+        .invoke_handler(tauri::generate_handler![start_server, setup, get_client_id])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

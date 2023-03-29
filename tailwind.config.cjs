@@ -4,7 +4,11 @@ module.exports = {
     files: ["./index.html", "./src/**/*.{ts,tsx}"],
   },
   theme: {
-    extend: {},
+    extend: {
+      width: {
+        120: "calc(100%+40px)",
+      },
+    },
   },
   plugins: [],
 };

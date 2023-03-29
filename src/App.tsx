@@ -4,80 +4,46 @@ import { tauri } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
 import { appWindow } from "@tauri-apps/api/window";
 const { invoke } = tauri;
+import Unauthenticated from "./Unauthenticated";
 import "./styles.css";
 
-interface buttonProps {
-  content: string;
-  onClick: () => void;
-  shape: "circle" | "square" | "none";
-}
-
-function Button(props: any) {
-  return (
-    <button
-      type="button"
-      onClick={props.onClick}
-      className={`w-20 h-20 ${
-        props.shape == "circle"
-          ? "rounded-full"
-          : props.shape == "square"
-          ? "rounded-none"
-          : "rounded-md"
-      } bg-blue-500`}
-    >
-      {" "}
-      {props.content}{" "}
-    </button>
-  );
-}
-
-async function generateParams(window: Window) {
-  const randomText: string = await invoke("generate_random_text");
-  const clientId: string = await invoke("get_client_id");
-  localStorage.setItem("code_verifier", randomText);
-  const encoder = new TextEncoder();
-  const code = await window.crypto.subtle.digest(
-    "SHA-256",
-    encoder.encode(randomText)
-  );
-  const codeChallenge = window
-    .btoa(String.fromCharCode(...new Uint8Array(code)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-  console.log(codeChallenge);
-  const port: number | string = await invoke("start_server");
-  const scope = "streaming user-read-private user-read-email";
-  let params = new URLSearchParams({
-    response_type: "code",
-    client_id: clientId,
-    redirect_uri: `http://localhost:${port}`,
-    scope: scope,
-  });
-  return params;
+interface songsJSON {
+  name: string;
+  album: {
+    name: string;
+    images: {
+      url: string;
+    }[];
+  };
+  artists: {
+    name: string;
+  }[];
 }
 
 function App() {
-  let authWindow: Window | null;
-  const [text, setText] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
+  const [nowPlaying, setNowPlaying] = useState<songsJSON>();
   useEffect(() => {
     (async () => await invoke("setup"))();
-    console.log("setup");
-    listen("redirect_uri", (event: any) => {
-      console.log(authWindow);
-      if (event.payload == "success") setLoggedIn(true);
-      authWindow?.close();
-    });
+    if (localStorage.getItem("authenticated") == "true") setLoggedIn(true);
   }, []);
 
-  async function handleClick() {
-    const params = await generateParams(window);
-    authWindow = open(
-      `https://accounts.spotify.com/authorize?${params.toString()}`,
-      "_blank",
-      "width=600,height=800"
+  async function getRecentlyPlayed() {
+    const res = await fetch(
+      "https://api.spotify.com/v1/me/player/currently-playing",
+      {
+        headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
+      }
     );
+    if (res.status == 204)
+      return setNowPlaying({
+        name: "Nothing Playing",
+        album: { name: "Nothing Playing", images: [{ url: "" }] },
+        artists: [{ name: "Nothing Playing" }],
+      });
+    const data = await res.json();
+    const song: songsJSON = data.item;
+    setNowPlaying(song);
   }
 
   return (
@@ -87,11 +53,37 @@ function App() {
         <button className="relative px-2 hover:bg-red-600 transition-colors cursor-default rounded-tr-xl" type="button">x</button>
       </div>
       {loggedIn ? (
-        <div>Logged in</div>
+        <>
+          {nowPlaying?.album && (
+            <div className="flex flex-row">
+              <img
+                src={nowPlaying?.album.images[0]?.url}
+                alt="background-image"
+                className="w-32 object-cover"
+              />
+            </div>
+          )}
+          <div>{nowPlaying?.name}</div>
+          <div>{nowPlaying?.artists.map((a) => a.name).join(",")}</div>
+          <div>
+            <button
+              onClick={getRecentlyPlayed}
+              type="button"
+              className="bg-green-300 rounded-md p-2 hover:bg-blue-300 transition-colors"
+            >
+              Get Now Playing
+            </button>
+          </div>
+        </>
       ) : (
-        <Button onClick={handleClick} content="Authorize" shape="none" />
+        <Unauthenticated setLoggedIn={setLoggedIn} />
       )}
-      {text}
+      <img
+        src={nowPlaying?.album.images[0]?.url}
+        alt="background-image"
+        className="object-cover -z-10 blur-xl w-screen h-screen absolute left-0 top-0 opacity-80"
+        z-index="-1"
+      />
     </div>
   );
 }
