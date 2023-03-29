@@ -72,13 +72,12 @@
       {
         "fullscreen": false,
         "resizable": false,
-        "title": "desktop-app",
-        "width": 600,
-        "height": 400,
+        "title": "Spotify Mini Player",
+        "width": 300,
+        "height": 300,
         "alwaysOnTop": true,
         "decorations": false,
-        "x": 2555,
-        "y": 1000
+        "transparent": true
       }
     ]
   }

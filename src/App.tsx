@@ -15,6 +15,7 @@ interface buttonProps {
 function Button(props: any) {
   return (
     <button
+      type="button"
       onClick={props.onClick}
       className={`w-20 h-20 ${
         props.shape == "circle"
@@ -80,7 +81,11 @@ function App() {
   }
 
   return (
-    <div className="w-screen h-screen flex border border-black justify-center items-center">
+    <div className="w-screen h-screen flex justify-center items-center bg-white rounded-xl">
+      <div className="absolute w-screen h-6 top-0 rounded-t-xl flex justify-end bg-gray-50">
+        <button className="relative px-2 hover:bg-gray-400 transition-colors cursor-default" type="button">-</button>
+        <button className="relative px-2 hover:bg-red-600 transition-colors cursor-default rounded-tr-xl" type="button">x</button>
+      </div>
       {loggedIn ? (
         <div>Logged in</div>
       ) : (

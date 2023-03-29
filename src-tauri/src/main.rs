@@ -5,7 +5,7 @@ use base64::{engine::general_purpose, Engine as _};
 use dotenv::dotenv;
 use rand::Rng;
 use reqwest::blocking::Client;
-use tauri::{LogicalSize, PhysicalPosition, Size, Window};
+use tauri::{PhysicalPosition, Window};
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -52,7 +52,7 @@ fn generate_random_text() -> String {
     random_text
 }
 
-fn get_token(code: &str) -> String {
+fn get_token(code: &str) -> &str {
     dotenv().ok();
     let client_id = std::env::var("CLIENT_ID").expect("Error: CLIENT_ID must be set");
     let client_secret = std::env::var("CLIENT_SECRET").expect("Error: CLIENT_SECRET must be set");
@@ -80,23 +80,30 @@ fn get_token(code: &str) -> String {
         .unwrap()
         .get("access_token")
         .unwrap()
-        .to_string();
+        .to_string()
+        .as_str();
     token
 }
 
 #[tauri::command]
 async fn setup(window: Window) -> Result<(), String> {
-    let logical_size = LogicalSize::new(600.0, 400.0);
-    window.set_size(Size::new(logical_size)).unwrap();
+    // let logical_size = LogicalSize::new(600.0, 400.0);
+    // window.set_size(Size::new(logical_size)).unwrap();
     let available_monitors = window.available_monitors().unwrap();
+
     let mut position_x = &available_monitors[0].size().width - window.outer_size().unwrap().width;
-    let mut position_y = &available_monitors[0].size().height - window.outer_size().unwrap().height;
+    let mut position_y = &available_monitors[0].size().height
+        - window.outer_size().unwrap().height
+        - (48 as f64 * &available_monitors[0].scale_factor()) as u32;
 
     if available_monitors.len() > 1 {
         position_x = available_monitors[1].position().x as u32;
-        position_y = &available_monitors[1].size().height - window.outer_size().unwrap().height;
+        position_y = &available_monitors[1].size().height
+            - window.outer_size().unwrap().height
+            - (48 as f64 * &available_monitors[1].scale_factor()) as u32;
     }
     let position = PhysicalPosition::new(position_x, position_y);
+
     window.set_position(position).unwrap();
     Ok(())
 }
@@ -107,10 +114,10 @@ fn get_client_id() -> String {
     std::env::var("CLIENT_ID").expect("Error: CLIENT_ID must be set")
 }
 
-// #[tauri::command]
-fn get_currently_playing() -> String {
-    
-}
+// // #[tauri::command]
+// fn get_currently_playing() -> String {
+
+// }
 
 fn main() {
     tauri::Builder::default()
