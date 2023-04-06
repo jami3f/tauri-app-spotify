@@ -35,6 +35,11 @@ function App() {
         headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
       }
     );
+    if (!res.ok) {
+      const refreshToken = localStorage.getItem("refresh_token");
+      const newToken: string = await invoke("refresh_token", {refresh_token: refreshToken});
+      localStorage.setItem("token", newToken);        
+    }
     if (res.status == 204)
       return setNowPlaying({
         name: "Nothing Playing",
@@ -47,7 +52,7 @@ function App() {
   }
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center bg-white rounded-xl">
+    <div className="w-screen h-screen flex flex-col justify-center items-center bg-white rounded-xl -z-20">
       <div className="absolute w-screen h-6 top-0 rounded-t-xl flex justify-end bg-gray-50">
         <button className="relative px-2 hover:bg-gray-400 transition-colors cursor-default" type="button">-</button>
         <button className="relative px-2 hover:bg-red-600 transition-colors cursor-default rounded-tr-xl" type="button">x</button>
@@ -82,7 +87,6 @@ function App() {
         src={nowPlaying?.album.images[0]?.url}
         alt="background-image"
         className="object-cover -z-10 blur-xl w-screen h-screen absolute left-0 top-0 opacity-80"
-        z-index="-1"
       />
     </div>
   );

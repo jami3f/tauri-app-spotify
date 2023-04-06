@@ -29,7 +29,8 @@ export default function Unauthenticated(props: { setLoggedIn: Function }) {
   useEffect(() => {
     listen("redirect_uri", (event: any) => {
         localStorage.setItem("authenticated", "true");
-        localStorage.setItem("token", event.payload)
+        localStorage.setItem("token", event.payload[0])
+        localStorage.setItem("refresh_token", event.payload[1])
     //   authWindow?.close();
       props.setLoggedIn(true);
     });

@@ -3,7 +3,6 @@
 
 use base64::{engine::general_purpose, Engine as _};
 use dotenv::dotenv;
-use rand::Rng;
 use reqwest::blocking::Client;
 use tauri::{PhysicalPosition, Window};
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
@@ -27,15 +26,15 @@ async fn start_server(window: Window) -> Result<u16, String> {
             let code = url.split('=').collect::<Vec<&str>>()[1];
             println!("Code: {}", code);
             let token = get_token(code);
-            println!("Token: {}", token);
-            let _ = window.emit("redirect_uri", token);
+            println!("Token: {}\nRefresh: {}", token.0, token.1);
+            let _ = window.emit("redirect_uri", (token.0, token.1));
         },
     )
     .map_err(|err| err.to_string());
     server
 }
 
-fn get_token(code: &str) -> String {
+fn get_token(code: &str) -> (String, String) {
     dotenv().ok();
     let client_id = std::env::var("CLIENT_ID").expect("Error: CLIENT_ID must be set");
     let client_secret = std::env::var("CLIENT_SECRET").expect("Error: CLIENT_SECRET must be set");
@@ -59,14 +58,21 @@ fn get_token(code: &str) -> String {
         .unwrap()
         .text()
         .unwrap();
-    let token = serde_json::from_str::<serde_json::Value>(&response)
+    let access_token = serde_json::from_str::<serde_json::Value>(&response)
         .unwrap()
         .get("access_token")
         .unwrap()
         .as_str()
         .unwrap()
         .to_string();
-    token
+    let refresh_token = serde_json::from_str::<serde_json::Value>(&response)
+        .unwrap()
+        .get("refresh_token")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .to_string();
+    (access_token, refresh_token)
 }
 
 #[tauri::command]
@@ -132,7 +138,7 @@ fn get_client_id() -> String {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![start_server, setup, get_client_id])
+        .invoke_handler(tauri::generate_handler![start_server, setup, get_client_id, get_new_token])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
