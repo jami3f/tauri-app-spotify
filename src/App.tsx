@@ -5,6 +5,7 @@ import { listen } from "@tauri-apps/api/event";
 import { appWindow } from "@tauri-apps/api/window";
 const { invoke } = tauri;
 import Unauthenticated from "./Unauthenticated";
+import WindowControls from "./components/WindowControls";
 import "./styles.css";
 
 interface songsJSON {
@@ -26,6 +27,11 @@ function App() {
   useEffect(() => {
     (async () => await invoke("setup"))();
     if (localStorage.getItem("authenticated") == "true") setLoggedIn(true);
+    getRecentlyPlayed();
+    const interval = setInterval(() => {
+      getRecentlyPlayed();
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   async function getRecentlyPlayed() {
@@ -37,8 +43,10 @@ function App() {
     );
     if (!res.ok) {
       const refreshToken = localStorage.getItem("refresh_token");
-      const newToken: string = await invoke("refresh_token", {refresh_token: refreshToken});
-      localStorage.setItem("token", newToken);        
+      const newToken: string = await invoke("refresh_token", {
+        refresh_token: refreshToken,
+      });
+      localStorage.setItem("token", newToken);
     }
     if (res.status == 204)
       return setNowPlaying({
@@ -52,43 +60,40 @@ function App() {
   }
 
   return (
-    <div className="w-screen h-screen flex flex-col justify-center items-center bg-white rounded-xl -z-20">
-      <div className="absolute w-screen h-6 top-0 rounded-t-xl flex justify-end bg-gray-50">
-        <button className="relative px-2 hover:bg-gray-400 transition-colors cursor-default" type="button">-</button>
-        <button className="relative px-2 hover:bg-red-600 transition-colors cursor-default rounded-tr-xl" type="button">x</button>
-      </div>
-      {loggedIn ? (
-        <>
-          {nowPlaying?.album && (
-            <div className="flex flex-row">
-              <img
-                src={nowPlaying?.album.images[0]?.url}
-                alt="background-image"
-                className="w-32 object-cover"
-              />
-            </div>
-          )}
-          <div>{nowPlaying?.name}</div>
-          <div>{nowPlaying?.artists.map((a) => a.name).join(",")}</div>
-          <div>
-            <button
+    <>
+      <div className="bg-white rounded-xl w-screen h-screen relative flex flex-col justify-center items-center -z-20">
+        <img
+          src={nowPlaying?.album.images[0]?.url}
+          alt="background-image"
+          className="object-cover blur-xl w-screen h-screen absolute left-0 top-0 opacity-80 -z-10 rounded-xl"
+        />
+        <WindowControls />
+        {loggedIn ? (
+          <div className="w-screen h-screen flex flex-col justify-center items-center text-center">
+            {nowPlaying?.album && (
+              <div className="flex flex-row">
+                <img
+                  src={nowPlaying?.album.images[0]?.url}
+                  alt="background-image"
+                  className="w-32 object-cover"
+                />
+              </div>
+            )}
+            <div>{nowPlaying?.name}</div>
+            <div>{nowPlaying?.artists.map((a) => a.name).join(",")}</div>
+            {/* <button
               onClick={getRecentlyPlayed}
               type="button"
               className="bg-green-300 rounded-md p-2 hover:bg-blue-300 transition-colors"
             >
               Get Now Playing
-            </button>
+            </button> */}
           </div>
-        </>
-      ) : (
-        <Unauthenticated setLoggedIn={setLoggedIn} />
-      )}
-      <img
-        src={nowPlaying?.album.images[0]?.url}
-        alt="background-image"
-        className="object-cover -z-10 blur-xl w-screen h-screen absolute left-0 top-0 opacity-80"
-      />
-    </div>
+        ) : (
+          <Unauthenticated setLoggedIn={setLoggedIn} />
+        )}
+      </div>
+    </>
   );
 }
 

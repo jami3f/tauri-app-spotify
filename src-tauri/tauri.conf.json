@@ -7,7 +7,7 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "desktop-app",
+    "productName": "spotify-mini-player",
     "version": "0.0.0"
   },
   "tauri": {
@@ -16,7 +16,7 @@
       "window":{
         "all": false,
         "center": false,
-        "close": false,
+        "close": true,
         "create": false,
         "hide": false,
         "maximize": false,
@@ -59,7 +59,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "spotifyjam.tauri.dev",
       "targets": "all"
     },
     "security": {
