@@ -4,7 +4,7 @@
 use base64::{engine::general_purpose, Engine as _};
 use dotenv::dotenv;
 use reqwest::blocking::Client;
-use tauri::{PhysicalPosition, Window};
+use tauri::{PhysicalPosition, SystemTray, Window};
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -137,8 +137,16 @@ fn get_client_id() -> String {
 }
 
 fn main() {
+    let tray = SystemTray::new();
+
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![start_server, setup, get_client_id, get_new_token])
+        .system_tray(tray)
+        .invoke_handler(tauri::generate_handler![
+            start_server,
+            setup,
+            get_client_id,
+            get_new_token
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

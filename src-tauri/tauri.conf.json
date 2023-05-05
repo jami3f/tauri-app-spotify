@@ -13,7 +13,7 @@
   "tauri": {
     "allowlist": {
       "all": false,
-      "window":{
+      "window": {
         "all": false,
         "center": false,
         "close": true,
@@ -35,13 +35,13 @@
         "setIgnoreCursorEvents": false,
         "setMaxSize": false,
         "setMinSize": false,
-        "setPosition": false,
+        "setPosition": true,
         "setResizable": false,
         "setSize": false,
         "setSkipTaskbar": false,
         "setTitle": false,
         "show": false,
-        "startDragging": false,
+        "startDragging": true,
         "unmaximize": false,
         "unminimize": false
       },
@@ -49,6 +49,9 @@
         "all": false,
         "open": true
       }
+    },
+    "systemTray": {
+      "iconPath": "icons/32x32.png"
     },
     "bundle": {
       "active": true,
